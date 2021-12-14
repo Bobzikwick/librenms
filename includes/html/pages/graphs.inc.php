@@ -92,8 +92,8 @@ if (! $auth) {
         $link_array['page'] = 'graphs';
         $link = \LibreNMS\Util\Url::generate($link_array);
 
-        echo '<td align=center>';
-        echo '<b>' . $text . '</b><br>';
+        echo '<td style="text-align: center;">';
+        echo '<b>' . $text . '</b>';
         echo '<a href="' . $link . '">';
         echo \LibreNMS\Util\Url::lazyGraphTag($graph_array);
         echo '</a>';
@@ -153,6 +153,12 @@ if (! $auth) {
     }
 
     if ($vars['type'] == 'port_bits') {
+        echo ' | ';
+        if ($vars['port_speed_zoom'] ?? Config::get('graphs.port_speed_zoom')) {
+            echo generate_link('Zoom to Traffic', $vars, ['page' => 'graphs', 'port_speed_zoom' => 0]);
+        } else {
+            echo generate_link('Zoom to Port Speed', $vars, ['page' => 'graphs', 'port_speed_zoom' => 1]);
+        }
         echo ' | To show trend, set to future date';
     }
 

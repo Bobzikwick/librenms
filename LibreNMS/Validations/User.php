@@ -18,12 +18,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * @link       https://www.librenms.org
+ *
  * @copyright  2017 Tony Murray
  * @author     Tony Murray <murraytony@gmail.com>
  */
 
 namespace LibreNMS\Validations;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 use LibreNMS\Config;
 use LibreNMS\Util\EnvHelper;
@@ -37,7 +39,7 @@ class User extends BaseValidation
      * Validate this module.
      * To return ValidationResults, call ok, warn, fail, or result methods on the $validator
      *
-     * @param Validator $validator
+     * @param  Validator  $validator
      */
     public function validate(Validator $validator)
     {
@@ -47,13 +49,19 @@ class User extends BaseValidation
         $lnms_groupname = \config('librenms.group');
 
         if (! ($username === 'root' || $username === $lnms_username)) {
-            if (isCli()) {
-                $validator->fail("You need to run this script as $lnms_username or root");
+            if (App::runningInConsole()) {
+                $validator->fail("You need to run this script as '$lnms_username' or root");
             } elseif (function_exists('posix_getgrnam')) {
                 $lnms_group = posix_getgrnam($lnms_groupname);
-                if (! in_array($username, $lnms_group['members'])) {
+
+                if ($lnms_group === false) {
                     $validator->fail(
-                        "Your web server or php-fpm is not running as user '$lnms_username' or in the group '$lnms_groupname''",
+                        "The group '$lnms_groupname' does not exist",
+                        "groupadd $lnms_groupname"
+                    );
+                } elseif (! in_array($username, $lnms_group['members'])) {
+                    $validator->fail(
+                        "Your web server or php-fpm is not running as user '$lnms_username' or in the group '$lnms_groupname'",
                         "usermod -a -G $lnms_groupname $username"
                     );
                 }
@@ -108,7 +116,7 @@ class User extends BaseValidation
 
                     if (! empty($files)) {
                         $result = ValidationResult::fail(
-                            "We have found some files that are owned by a different user than $lnms_username, this " .
+                            "We have found some files that are owned by a different user than '$lnms_username', this " .
                             'will stop you updating automatically and / or rrd files being updated causing graphs to fail.'
                         )
                             ->setFix($fix)
@@ -121,7 +129,7 @@ class User extends BaseValidation
                 }
             }
         } else {
-            $validator->warn("You don't have LIBRENMS_USER set, this most likely needs to be set to librenms");
+            $validator->warn("You don't have LIBRENMS_USER set, this most likely needs to be set to 'librenms'");
         }
     }
 }

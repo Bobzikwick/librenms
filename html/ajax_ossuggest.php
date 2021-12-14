@@ -15,6 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use LibreNMS\Util\Debug;
+
 $init_modules = ['web', 'auth'];
 require realpath(__DIR__ . '/..') . '/includes/init.php';
 
@@ -22,12 +24,13 @@ if (! Auth::check()) {
     exit('Unauthorized');
 }
 
-set_debug($_REQUEST['debug']);
+Debug::set($_REQUEST['debug']);
 
 /**
  * Levenshtein Sort
- * @param string $base Comparison basis
- * @param array  $obj  Object to sort
+ *
+ * @param  string  $base  Comparison basis
+ * @param  array  $obj  Object to sort
  * @return array
  */
 function levsortos($base, $obj, $keys)

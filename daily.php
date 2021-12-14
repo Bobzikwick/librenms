@@ -11,6 +11,7 @@ use App\Models\DeviceGroup;
 use Illuminate\Database\Eloquent\Collection;
 use LibreNMS\Alert\AlertDB;
 use LibreNMS\Config;
+use LibreNMS\Util\Debug;
 use LibreNMS\Validations\Php;
 
 $init_modules = ['alerts'];
@@ -21,7 +22,7 @@ $options = getopt('df:o:t:r:');
 
 if (isset($options['d'])) {
     echo "DEBUG\n";
-    $debug = true;
+    Debug::set();
 }
 
 if ($options['f'] === 'update') {
@@ -282,7 +283,7 @@ if ($options['f'] === 'purgeusers') {
         if ($purge > 0) {
             $users = \App\Models\AuthLog::where('datetime', '>=', \Carbon\Carbon::now()->subDays($purge))
                 ->distinct()->pluck('user')
-                ->merge(\App\Models\User::has('apiToken')->pluck('username')) // don't purge users with api tokens
+                ->merge(\App\Models\User::has('apiTokens')->pluck('username')) // don't purge users with api tokens
                 ->unique();
 
             if (\App\Models\User::thisAuth()->whereNotIn('username', $users)->delete()) {
@@ -342,6 +343,15 @@ if ($options['f'] === 'peeringdb') {
     if ($lock->get()) {
         cache_peeringdb();
         $lock->release();
+    }
+}
+
+if ($options['f'] === 'mac_oui') {
+    $lock = Cache::lock('macouidb', 86000);
+    if ($lock->get()) {
+        $res = cache_mac_oui();
+        $lock->release();
+        exit($res);
     }
 }
 

@@ -178,7 +178,7 @@ $(document).on("change", '#group', function() {
 
 $(document).ready(function() {
     var lines = 'on';
-    $("#linenumbers").button().click(function() {
+    $("#linenumbers").button().on("click", function() {
         if (lines == 'on') {
             $($('.config').find('ol').get().reverse()).each(function(){
                 $(this).replaceWith($('<ul>'+$(this).html()+'</ul>'))
@@ -350,10 +350,10 @@ function update_location(id, latlng, callback) {
         method: 'PATCH',
         url: ajax_url + '/location/' + id,
         data: {lat: latlng.lat, lng: latlng.lng}
-    }).success(function () {
+    }).done(function () {
         toastr.success('Location updated');
         typeof callback === 'function' && callback(true);
-    }).error(function (e) {
+    }).fail(function (e) {
         var msg = 'Failed to update location: ' + e.statusText;
         var data = e.responseJSON;
         if (data) {
@@ -468,4 +468,9 @@ function humanize_duration(seconds) {
     res += mins + 'm ' + secs + 's ';
 
     return res;
+}
+
+function popUp(URL)
+{
+    window.open(URL, '_blank', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=550,height=600');
 }

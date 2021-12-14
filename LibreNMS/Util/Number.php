@@ -36,6 +36,7 @@ class Number
 
     public static function formatSi($value, $round = 2, $sf = 3, $suffix = 'B')
     {
+        $value = (float) $value;
         $neg = $value < 0;
         if ($neg) {
             $value = $value * -1;
@@ -66,6 +67,7 @@ class Number
 
     public static function formatBi($value, $round = 2, $sf = 3, $suffix = 'B')
     {
+        $value = (float) $value;
         $neg = $value < 0;
         if ($neg) {
             $value = $value * -1;
@@ -88,7 +90,7 @@ class Number
      * Cast string to int or float.
      * Returns 0 if string is not numeric
      *
-     * @param string $number
+     * @param  string  $number
      * @return float|int
      */
     public static function cast($number)

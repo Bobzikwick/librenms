@@ -2271,10 +2271,6 @@ label {
   width: auto !important;
 }
 
-.toast-top-right {
-  top: 34px;
-}
-
 .tooltip {
     display: block !important;
     z-index: 10000;
@@ -2387,4 +2383,19 @@ label {
 
 .logon-message {
     white-space: pre-wrap;
+}
+
+.expandable {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.expandable:hover {
+    overflow: visible;
+}
+.expandable:hover span {
+    position: relative;
+    background-color: white;
+    padding: 2px 3px 2px 0;
+    z-index: 5;
 }

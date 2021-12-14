@@ -18,6 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * @link       https://www.librenms.org
+ *
  * @copyright  2017 Neil Lathwood
  * @author     Neil Lathwood <librenms+n@laf.io>
  */
@@ -123,6 +124,8 @@ class DBSetupTest extends DBTestCase
     public function testValidateSchema()
     {
         if (is_file('misc/db_schema.yaml')) {
+            DB::connection($this->connection)->statement('SET time_zone = "+00:00";');
+
             $master_schema = \Symfony\Component\Yaml\Yaml::parse(
                 file_get_contents('misc/db_schema.yaml')
             );

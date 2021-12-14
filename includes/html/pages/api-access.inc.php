@@ -67,7 +67,7 @@ if (Auth::user()->hasGlobalAdmin()) {
             <div class="form-group">
               <label for="token" class="col-sm-2 control-label">Token: </label>
               <div class="col-sm-8">
-                <input type="text" class="form-control" id="token" name="token" value="<?php echo $_POST['token']; ?>" readonly>
+                <input type="text" class="form-control" id="token" name="token" value="<?php echo htmlspecialchars($_POST['token']); ?>" readonly>
               </div>
               <div class="col-sm-2">
               </div>
@@ -75,7 +75,7 @@ if (Auth::user()->hasGlobalAdmin()) {
             <div class="form-group">
               <label for="description" class="col-sm-2 control-label">Descr: </label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" id="description" name="description" value="<?php echo $_POST['description']; ?>">
+                <input type="text" class="form-control" id="description" name="description" value="<?php echo htmlspecialchars($_POST['description']); ?>">
               </div>
             </div>
         </div>
@@ -195,7 +195,7 @@ if (Auth::user()->hasGlobalAdmin()) {
      new QRCode(document.getElementById("qrcode"), token_hash);
    });
 
-  $('#token-removal').click('', function(event) {
+  $('#token-removal').on("click", function(event) {
     event.preventDefault();
     token_id = $("#token_id").val();
     $.ajax({
@@ -213,7 +213,7 @@ if (Auth::user()->hasGlobalAdmin()) {
       }
     });
   });
-  $('#token-create').click('', function(event) {
+  $('#token-create').on("click", function(event) {
     event.preventDefault();
     $.ajax({
       type: "POST",
@@ -232,7 +232,7 @@ if (Auth::user()->hasGlobalAdmin()) {
       }
     });
   });
-  $('#pass-gen').click('', function(event) {
+  $('#pass-gen').on("click", function(event) {
     event.preventDefault();
     token = $.password(32,false);
     $('#token').val(token);
