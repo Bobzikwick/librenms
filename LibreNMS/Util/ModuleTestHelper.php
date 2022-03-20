@@ -25,6 +25,8 @@
 
 namespace LibreNMS\Util;
 
+use App\Actions\Device\ValidateDeviceAndCreate;
+use App\Models\Device;
 use DeviceCache;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -65,6 +67,7 @@ class ModuleTestHelper
         'mpls' => ['ports', 'vrf', 'mpls'],
         'nac' => ['ports', 'nac'],
         'ospf' => ['ports', 'ospf'],
+        'stp' => ['ports', 'vlans', 'stp'],
         'vlans' => ['ports', 'vlans'],
         'vrf' => ['ports', 'vrf'],
     ];
@@ -195,7 +198,6 @@ class ModuleTestHelper
         $save_vdebug = Debug::isVerbose();
         Debug::set();
         Debug::setVerbose();
-        \Log::setDefaultDriver('console');
         discover_device($device, $this->parseArgs('discovery'));
         $poller = app(Poller::class, ['device_spec' => $device_id, 'module_override' => $this->modules]);
         $poller->poll();
@@ -492,7 +494,7 @@ class ModuleTestHelper
             if (empty($results)) {
                 $this->qPrint("No data for $filename\n");
             } else {
-                $this->qPrint("Saved snmprec data $filename\n");
+                $this->qPrint("\nSaved snmprec data $filename\n");
                 file_put_contents($filename, $output);
             }
         }
@@ -558,11 +560,15 @@ class ModuleTestHelper
 
         // Add the test device
         try {
-            Config::set('snmp.community', [$this->file_name]);
-            $device_id = addHost($snmpsim->getIp(), 'v2c', $snmpsim->getPort());
-
-            // disable to block normal pollers
-            dbUpdate(['disabled' => 1], 'devices', 'device_id=?', [$device_id]);
+            $new_device = new Device([
+                'hostname' => $snmpsim->getIp(),
+                'version' => 'v2c',
+                'community' => $this->file_name,
+                'port' => $snmpsim->getPort(),
+                'disabled' => 1, // disable to block normal pollers
+            ]);
+            (new ValidateDeviceAndCreate($new_device))->execute();
+            $device_id = $new_device->device_id;
 
             $this->qPrint("Added device: $device_id\n");
         } catch (\Exception $e) {
@@ -649,7 +655,7 @@ class ModuleTestHelper
             // insert new data, don't store duplicate data
             foreach ($data as $module => $module_data) {
                 // skip saving modules with no data
-                if ($this->dataIsEmpty($module_data['discovery']) && $this->dataIsEmpty($module_data['poller'])) {
+                if (empty($module_data['discovery']) && empty($module_data['poller'])) {
                     continue;
                 }
                 if ($module_data['discovery'] == $module_data['poller']) {
@@ -704,10 +710,10 @@ class ModuleTestHelper
      *
      * @param  int  $device_id  The test device id
      * @param  array  $modules  to capture data for (should be a list of modules that were actually run)
-     * @param  string  $key  a key to store the data under the module key (usually discovery or poller)
+     * @param  string  $type  a key to store the data under the module key (usually discovery or poller)
      * @return array The dumped data keyed by module -> table
      */
-    public function dumpDb($device_id, $modules, $key = null)
+    public function dumpDb($device_id, $modules, $type)
     {
         $data = [];
         $module_dump_info = $this->getTableData();
@@ -719,12 +725,11 @@ class ModuleTestHelper
 
         // only dump data for the given modules
         foreach ($modules as $module) {
-            foreach ($module_dump_info[$module] ?: [] as $table => $info) {
+            foreach ($module_dump_info[$module] ?? [] as $table => $info) {
                 if ($table == 'component') {
-                    if (isset($key)) {
-                        $data[$module][$key][$table] = $this->collectComponents($device_id);
-                    } else {
-                        $data[$module][$table] = $this->collectComponents($device_id);
+                    $components = $this->collectComponents($device_id);
+                    if (! empty($components)) {
+                        $data[$module][$type][$table] = $components;
                     }
                     continue;
                 }
@@ -762,6 +767,11 @@ class ModuleTestHelper
                 $fields = implode(', ', $select);
                 $rows = dbFetchRows("SELECT $fields FROM `$table` $join $where $order_by", $params);
 
+                // don't include empty tables
+                if (empty($rows)) {
+                    continue;
+                }
+
                 // remove unwanted fields
                 if (isset($info['included_fields'])) {
                     $keys = array_flip($info['included_fields']);
@@ -775,11 +785,7 @@ class ModuleTestHelper
                     }, $rows);
                 }
 
-                if (isset($key)) {
-                    $data[$module][$key][$table] = $rows;
-                } else {
-                    $data[$module][$table] = $rows;
-                }
+                $data[$module][$type][$table] = $rows;
             }
         }
 
@@ -872,7 +878,7 @@ class ModuleTestHelper
         return $this->json_file;
     }
 
-    private function collectComponents($device_id)
+    private function collectComponents(int $device_id): array
     {
         $components = (new Component())->getComponents($device_id)[$device_id] ?? [];
         $components = Arr::sort($components, function ($item) {
@@ -880,16 +886,5 @@ class ModuleTestHelper
         });
 
         return array_values($components);
-    }
-
-    private function dataIsEmpty($data)
-    {
-        foreach ($data as $table_data) {
-            if (! empty($table_data)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

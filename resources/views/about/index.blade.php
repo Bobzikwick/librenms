@@ -77,7 +77,7 @@
 
           <h3>{{ __('Contributors') }}</h3>
 
-          <p>{{ __('See the <a href=":url">list of contributors</a> on GitHub.', ['url' => 'https://github.com/librenms/librenms/blob/master/AUTHORS.md']) }}</p>
+          <p>{!! __('See the <a href=":url">list of contributors</a> on GitHub.', ['url' => 'https://github.com/librenms/librenms/graphs/contributors']) !!}</p>
 
           <h3>{{ __('Acknowledgements') }}</h3>
 
@@ -142,7 +142,7 @@
             <tr>
                 <td><i class='fa fa-fw fa-microchip fa-lg icon-theme' aria-hidden='true'></i> <b>{{ __('Processors') }}</b></td>
                 <td class='text-right'>{{ $stat_processors }}</td>
-                <td><i class='fa fa-fw fa-braille fa-lg icon-theme' aria-hidden='true'></i> <b>{{ __('Memory') }}</b></td>
+                <td><i class='fa-fw fas fa-memory fa-lg icon-theme' aria-hidden='true'></i> <b>{{ __('Memory') }}</b></td>
                 <td class='text-right'>{{ $stat_memory }}</td>
             </tr>
             <tr>

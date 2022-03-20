@@ -3,6 +3,7 @@
 // Build SNMP Cache Array
 use Illuminate\Support\Str;
 use LibreNMS\Config;
+use LibreNMS\Enum\PortAssociationMode;
 use LibreNMS\RRD\RrdDefinition;
 use LibreNMS\Util\Debug;
 use LibreNMS\Util\Number;
@@ -460,7 +461,7 @@ d_echo($port_stats);
 // compatibility reasons.
 $port_association_mode = Config::get('default_port_association_mode');
 if ($device['port_association_mode']) {
-    $port_association_mode = get_port_assoc_mode_name($device['port_association_mode']);
+    $port_association_mode = PortAssociationMode::getName($device['port_association_mode']);
 }
 
 $ports_found = [];
@@ -796,6 +797,7 @@ foreach ($ports as $port) {
                     $oid_rate = ($oid_diff / $polled_period);
                     if ($oid_rate < 0) {
                         $oid_rate = '0';
+                        $oid_diff = '0';
                         echo "negative $oid";
                     }
 
